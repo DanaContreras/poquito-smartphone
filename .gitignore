@@ -1,0 +1,4 @@
+# Archivos compilados
+*.o
+*.elf
+*.hex
