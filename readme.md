@@ -1,6 +1,6 @@
 # Wi-Fi Full-Duplex Voice Communicator (Wi-Voice)
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Platform](https://img.shields.io/badge/platform-Arduino%20Nano%20%7C%20FreeRTOS-green.svg) ![Status](https://img.shields.io/badge/status-Testing-yellow.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Platform](https://img.shields.io/badge/platform-Arduino%20Nano%20%7C%20ESP32%20%7C%20FreeRTOS-green.svg) ![Status](https://img.shields.io/badge/status-Testing-yellow.svg)
 
 Sistema de intercomunicación **Full-Duplex** sobre Wi-Fi. El dispositivo permite realizar llamadas de voz bidireccionales en tiempo real (VoIP) y cuenta con un sistema de señalización (timbre) para alertar sobre llamadas entrantes.
 
@@ -14,21 +14,36 @@ El objetivo es crear un "Walkie-Talkie" moderno sobre red IP local. A diferencia
 
 **Fase: Testing de componentes aislados**
 
-Se están validando los módulos de hardware de forma independiente antes de la integración final. Los tests corren sobre **Arduino Nano (ATmega328P)** con toolchain AVR puro (sin RTOS).
+Se están validando los módulos de hardware de forma independiente. Los tests corren sobre **Arduino Nano (ATmega328P)** con toolchain AVR puro.
 
 | Componente | Test | Estado |
 | :--- | :--- | :--- |
 | Micrófono MAX9814 | [`test-devices/max9814/`](test-devices/max9814/) | En progreso |
 | DAC MCP4725 + Amplificador PAM8403 | [`test-devices/mcp4725_pam8403/`](test-devices/mcp4725_pam8403/) | En progreso |
 
-**Próxima fase:** Integración de todos los componentes sobre **Arduino Nano 33 IoT** con **FreeRTOS**, Wi-Fi y stack UDP.
+---
+
+## Roadmap de Desarrollo
+
+| Fase | Checkpoints Críticos | Criterio de Exito | Tiempo Est. | Fecha Finalización |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Validación Mic (MAX9814)** | • Captura de audio funcional (ADC)<br>• Verificación de niveles básicos | Audio capturado visible en osciloscopio o volcado serie consistente. | ~4 Horas | [~19/04/26] |
+| **2. Validación DAC (MCP4725)** | • Reproducción vía I2C<br>• Amplificación PAM8403 sin ruido | Tono generado por software audible y claro en el altavoz. | ~4 Horas | [~19/04/26] |
+| **3. Wi-Fi Aislada (Tunnel)** | • Arduino Nano ↔ ESP32 (Serial/SPI)<br>• ESP32 ↔ PC vía Wi-Fi (UDP) | Envío de datos desde Arduino recibido íntegramente en la PC. | ~10 Horas | [~19/04/26] |
+| **4. FreeRTOS (ATmega328P)** | • Setup FreeRTOS en 2KB RAM<br>• Gestión de tareas: Audio y Comms | Sistema multihilo estable sin desbordamientos de stack. | ~12 Horas | [-] |
+| **5. Interop Desktop (Rust)** | • Software de PC en Rust para audio UDP<br>• Comunicación Nano ↔ PC | El dispositivo habla con la PC, evitando duplicar hardware inicialmente. | ~15 Horas | [-] |
+| **6. Planificación de Alcance** | • Evaluación de Multicast/Broadcasting<br>• Definición de escalabilidad de red | Documento técnico de arquitectura final para múltiples nodos. | ~6 Horas | [-] |
+| **7. Pipeline Audio & FSM** | • Streaming UDP 8kHz (Full-Duplex)<br>• Lógica de llamadas y señalización | Llamada completa funcional entre dos puntos (Nano y PC/Nano). | ~16 Horas | [~12/05/26] |
+| **8. Prototipado Físico** | • Soldadura final (PCB/Perfboard)<br>• Modelado 3D e Impresión de carcasa | Dispositivo compacto, sin protoboard y ensamblado. | ~25 Horas | [-] |
+| **9. Maestría del Sistema** | • Fine-tuning: AGC y Clipping<br>• Optimización extrema de latencia/RAM | Audio de alta fidelidad y estabilidad máxima bajo carga. | ~10 Horas | [-] |
+| **10. Vitrina del Proyecto (Web)** | • Diseño web estilo "Arduino Project"<br>• Documentación visual y técnica | Sitio web funcional para presentar el proyecto al público. | ~12 Horas | [-] |
 
 ---
 
 ## Requisitos Funcionales
 
 1. **Transmisión de Audio Full-Duplex:** Envío y recepción simultánea con latencia < 200ms.
-2. **Conectividad Wi-Fi:** Conexión a WLAN existente o modo AP.
+2. **Conectividad Wi-Fi:** Conexión a WLAN mediante módulo ESP32.
 3. **Señalización de Llamada:** Botón para iniciar llamada, buzzer y LED en el receptor.
 4. **Gestión de Estados:** Standby, Llamando, En Llamada, Error.
 5. **Calidad de Audio:** Muestreo mínimo a 8 kHz.
@@ -37,18 +52,15 @@ Se están validando los módulos de hardware de forma independiente antes de la 
 
 ## Hardware
 
-> **Nota sobre el MCU:** Los tests de componentes usan **Arduino Nano (ATmega328P)**. La integración final usará **Arduino Nano 33 IoT** (ARM Cortex-M0+, 48MHz, 32KB RAM, Wi-Fi integrado), ya que el ATmega328P no tiene suficiente RAM ni velocidad para manejar Wi-Fi + stack TCP/IP + audio en tiempo real con FreeRTOS.
-
 | Componente | Descripción | Función |
 | :--- | :--- | :--- |
-| **Arduino Nano 33 IoT** | ARM Cortex-M0+ (48MHz), 32KB RAM, Wi-Fi NINA-W102. | MCU principal en integración final. Ejecuta FreeRTOS y gestión de red. |
-| **MAX9814** | Micrófono electret con amplificador y AGC. Salida analógica 0–2.45V. | Captura audio. Conectado al ADC del Arduino. |
-| **MCP4725** | DAC I2C de 12 bits (4096 niveles, 0–VCC). Dirección por defecto 0x60. | Convierte muestras digitales a señal analógica para el amplificador. |
-| **PAM8403** | Amplificador estéreo Clase D, 3W+3W, alimentación 2.5–5.5V. | Amplifica la señal del DAC para mover el altavoz. |
-| **Altavoz** | 4–8 Ω. | Reproduce el audio recibido y el tono de llamada. |
-| **Pulsador** | Botón momentáneo normalmente abierto. | Iniciar / contestar / colgar llamada. |
-| **Buzzer piezoeléctrico** | Pasivo o activo. | Tono de llamada entrante (independiente del canal de voz). |
-| **LEDs indicadores** | Rojo (Standby/Error), Verde (En llamada). | Feedback visual del estado. |
+| **Arduino Nano** | ATmega328P (16MHz, 2KB RAM). | MCU principal. Gestiona ADC, DAC y FreeRTOS. |
+| **ESP32** | SoC con Wi-Fi/BT integrado. | Módulo de comunicaciones Wi-Fi (Puente Serial-to-WiFi). |
+| **MAX9814** | Micrófono con amplificador y AGC. | Captura audio. Conectado al ADC del Arduino. |
+| **MCP4725** | DAC I2C de 12 bits. | Convierte audio digital a analógico. |
+| **PAM8403** | Amplificador Clase D. | Maneja el altavoz. |
+| **Altavoz** | 4–8 Ω. | Reproduce voz y timbres. |
+| **Buzzer** | Piezoeléctrico. | Alerta de llamada entrante. |
 
 ---
 
