@@ -56,10 +56,14 @@ Esto generará el archivo `.hex` listo para cargar al Arduino.
 ## Cargar al Arduino
 
 1. Conecta tu Arduino al puerto USB
-2. Verifica/ajusta el puerto en el Makefile (variable PORT)
-3. Carga el programa:
+2. Carga el programa (el puerto se detecta automáticamente):
 ```bash
 make upload
+```
+
+Para forzar un puerto específico:
+```bash
+make PORT=/dev/ttyUSB1 upload
 ```
 
 ## Monitorear la Salida
@@ -70,6 +74,15 @@ make monitor
 ```
 
 O usa el monitor serial de Arduino IDE a 9600 baudios.
+
+### Cerrar el monitor
+
+| Atajo | Acción |
+|-------|--------|
+| `Ctrl+A` luego `k` | Cerrar sesión (confirmar con `y`) |
+| `Ctrl+A` luego `d` | Detach (reconectar con `screen -r`) |
+
+> **No uses `Ctrl+C`** — no cierra `screen`, lo deja como proceso zombie ocupando el puerto serial.
 
 ## Qué Esperar
 

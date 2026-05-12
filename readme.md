@@ -69,6 +69,8 @@ Se están validando los módulos de hardware de forma independiente. Los tests c
 ```
 poquito-smartphone/
 ├── readme.md
+├── scripts/
+│   └── detect_port.sh       # Auto-deteccion del puerto USB del Arduino
 └── test-devices/
     ├── max9814/               # Test micrófono MAX9814
     │   ├── test_max9814.c
@@ -104,7 +106,27 @@ brew tap osx-cross/avr && brew install avr-gcc avrdude
 Luego, dentro del directorio del test:
 ```bash
 make          # Compilar
-make upload   # Cargar al Arduino (ajustar PORT en el Makefile)
+make upload   # Cargar al Arduino (puerto detectado automaticamente)
 make monitor  # Monitor serial (9600 baud)
 make clean    # Limpiar archivos generados
 ```
+
+### Auto-detección de Puerto USB
+
+El puerto serial se detecta automáticamente al hacer `make upload` mediante `scripts/detect_port.sh`. El script busca dispositivos `/dev/ttyACM*` y `/dev/ttyUSB*`, priorizando chips conocidos (CH340, FTDI, Arduino oficial).
+
+Para forzar un puerto manualmente:
+```bash
+make PORT=/dev/ttyUSB1 upload
+```
+
+### Monitor Serial
+
+`make monitor` abre una sesión de `screen`. Para cerrarla correctamente:
+
+| Atajo | Acción |
+|-------|--------|
+| `Ctrl+A` luego `k` | Cerrar sesión (confirmar con `y`) |
+| `Ctrl+A` luego `d` | Detach (reconectar con `screen -r`) |
+
+> **No uses `Ctrl+C`** — no cierra `screen`, lo deja como proceso zombie ocupando el puerto serial.

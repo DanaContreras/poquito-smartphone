@@ -11,10 +11,10 @@ OBJCOPY = avr-objcopy
 SIZE = avr-size
 AVRDUDE = avrdude
 
-# Puerto serial (ajustar según tu sistema)
-# Linux: /dev/ttyACM0 o /dev/ttyUSB0
-# Windows: COM3, COM4, etc.
-PORT = /dev/ttyUSB0
+_PROJECT_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../..)
+
+# Puerto serial - auto-deteccion (override con: make PORT=/dev/ttyUSBx upload)
+PORT := $(shell $(_PROJECT_ROOT)/scripts/detect_port.sh)
 
 # Programador (Arduino UNO usa arduino)
 PROGRAMMER = arduino
@@ -52,6 +52,7 @@ size: $(ELF)
 
 # Cargar el programa al Arduino
 upload: $(HEX)
+	@echo "Puerto detectado: $(PORT)"
 	$(AVRDUDE) -p $(MCU) -c $(PROGRAMMER) -P $(PORT) -b 115200 -U flash:w:$(HEX):i
 
 # Limpiar archivos generados
