@@ -14,7 +14,7 @@ El objetivo es crear un "Walkie-Talkie" moderno sobre red IP local. A diferencia
 
 **Fase: Testing de componentes aislados**
 
-Se están validando los módulos de hardware de forma independiente. Los tests corren sobre **Arduino Nano (ATmega328P)** con toolchain AVR puro.
+Se están validando los módulos de hardware de forma independiente. Los tests corren sobre **Arduino Nano (ATmega328P)** con toolchain AVR, usando acceso directo a los registros del microcontrolador por dirección de memoria (sin `<avr/io.h>`).
 
 | Componente | Test | Estado |
 | :--- | :--- | :--- |
@@ -69,15 +69,22 @@ Se están validando los módulos de hardware de forma independiente. Los tests c
 ```
 poquito-smartphone/
 ├── readme.md
+├── drivers/                   # Drivers reutilizables para perifericos AVR
+│   ├── registers.h            # Definiciones de registros del ATmega328P
+│   ├── uart.h / uart.c        # Comunicacion serial UART
+│   ├── i2c.h / i2c.c          # Bus I2C/TWI
+│   ├── mcp4725.h / mcp4725.c  # DAC MCP4725 (via I2C)
+│   └── adc.h / adc.c          # Conversor analogico-digital
 ├── scripts/
-│   └── detect_port.sh       # Auto-deteccion del puerto USB del Arduino
+│   └── detect_port.sh         # Auto-deteccion del puerto USB del Arduino
 └── test-devices/
-    ├── max9814/               # Test micrófono MAX9814
+    ├── max9814/               # Test microfono MAX9814
     │   ├── test_max9814.c
     │   ├── Makefile
     │   └── README.md
     └── mcp4725_pam8403/       # Test DAC MCP4725 + amplificador PAM8403
         ├── test_mcp4725_pam8403.c
+        ├── i2c_scanner.c      # Escaner de dispositivos I2C
         ├── Makefile
         └── README.md
 ```

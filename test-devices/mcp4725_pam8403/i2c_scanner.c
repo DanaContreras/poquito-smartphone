@@ -3,11 +3,10 @@
  * Version con log detallado y timeout
  */
 
-#include <avr/io.h>
+#include <stdint.h>
 #include <util/delay.h>
+#include "../../drivers/registers.h"
 
-#define F_CPU 4000000UL
-#define BAUD 9600
 #define UBRR_VALUE ((F_CPU / (16UL * BAUD)) - 1)
 
 #define TIMEOUT_MAX 10000  // Timeout para operaciones I2C

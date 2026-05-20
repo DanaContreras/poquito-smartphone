@@ -235,6 +235,7 @@ O usa el monitor serial de Arduino IDE a 9600 baudios.
 | `-`   | Disminuir frecuencia |
 | `t`   | Test barrido de frecuencias |
 | `w`   | Test de todas las ondas |
+| `m`   | Reproducir melodia (Oda a la Alegria - Beethoven) |
 | `h`   | Mostrar menu de ayuda |
 
 ## Que Esperar
@@ -272,7 +273,7 @@ La frecuencia depende del delay configurado. Con 64 muestras por ciclo:
 
 1. Verifica SDA -> A4, SCL -> A5
 2. Algunos modulos MCP4725 usan direccion 0x62 en lugar de 0x60
-3. Modifica `MCP4725_ADDR` en el codigo si es necesario
+3. Modifica `MCP4725_ADDR` en `drivers/mcp4725.h` si es necesario
 
 ### Sonido distorsionado
 

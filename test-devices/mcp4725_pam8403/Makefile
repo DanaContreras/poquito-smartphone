@@ -13,6 +13,7 @@ SIZE = avr-size
 AVRDUDE = avrdude
 
 _PROJECT_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../..)
+_DRIVERS_DIR := $(_PROJECT_ROOT)/drivers
 
 # Puerto serial - auto-deteccion (override con: make PORT=/dev/ttyUSBx upload)
 PORT := $(shell $(_PROJECT_ROOT)/scripts/detect_port.sh)
@@ -21,13 +22,20 @@ PORT := $(shell $(_PROJECT_ROOT)/scripts/detect_port.sh)
 PROGRAMMER = arduino
 
 # Flags de compilacion
-CFLAGS = -Wall -Os -mmcu=$(MCU) -DF_CPU=$(F_CPU)
+CFLAGS = -Wall -Os -mmcu=$(MCU) -DF_CPU=$(F_CPU) -DBAUD=$(BAUD) -I$(_DRIVERS_DIR)
 LDFLAGS = -mmcu=$(MCU)
 
-# Archivos
+# Archivos del test
 TARGET = test_mcp4725_pam8403
-SRC = test_mcp4725_pam8403.c
-OBJ = $(SRC:.c=.o)
+TEST_SRC = test_mcp4725_pam8403.c
+
+# Drivers necesarios
+DRIVER_SRC = $(_DRIVERS_DIR)/uart.c $(_DRIVERS_DIR)/i2c.c $(_DRIVERS_DIR)/mcp4725.c
+
+# Objeto
+OBJ = $(TEST_SRC:.c=.o) $(notdir $(DRIVER_SRC:.c=.o))
+vpath %.c $(dir $(DRIVER_SRC))
+
 HEX = $(TARGET).hex
 ELF = $(TARGET).elf
 
