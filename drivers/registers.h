@@ -24,6 +24,7 @@
 
 #define RXC0    7
 #define UDRE0   5
+#define U2X0    1
 #define RXEN0   4
 #define TXEN0   3
 #define UCSZ01  2

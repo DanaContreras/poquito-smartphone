@@ -4,6 +4,7 @@
 void uart_init(void) {
     UBRR0H = (uint8_t)(UBRR_VALUE >> 8);
     UBRR0L = (uint8_t)UBRR_VALUE;
+    UCSR0A = (1 << U2X0);
     UCSR0B = (1 << RXEN0) | (1 << TXEN0);
     UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 }

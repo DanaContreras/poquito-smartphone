@@ -19,7 +19,7 @@
 #include <avr/pgmspace.h>
 
 #include "../../drivers/uart.h"
-#include "../../drivers/i2c.h"
+#include "../../drivers/twi.h"
 #include "../../drivers/mcp4725.h"
 
 // Tabla de seno (64 muestras, valores 0-4095 para 12 bits)
@@ -245,7 +245,7 @@ int main(void) {
     uint8_t was_silence = 0;
 
     uart_init();
-    i2c_init();
+    twi_init();
 
     _delay_ms(500);
 

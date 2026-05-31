@@ -1,0 +1,7 @@
+# Dependencias de los scripts de Python (scripts/)
+# Instalar con: pip install -r scripts/requirements.txt
+# Requiere ademas ffmpeg instalado en el sistema.
+
+pyserial>=3.5
+typer>=0.12
+rich>=13.0

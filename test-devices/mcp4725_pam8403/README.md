@@ -211,7 +211,7 @@ make PORT=/dev/ttyUSB1 upload
 make monitor
 ```
 
-O usa el monitor serial de Arduino IDE a 9600 baudios.
+O usa el monitor serial de Arduino IDE a 115200 baudios.
 
 ### Cerrar el monitor
 

@@ -1,10 +1,21 @@
 # Makefile para compilar codigo AVR (Arduino Nano) con avr-gcc
-# Test MCP4725 DAC + PAM8403 Amplificador
+# Tests para MCP4725 DAC + PAM8403 Amplificador
+#
+# Uso:
+#   make                              -> compila test_audio_tones (default)
+#   make TEST=test_audio_stream       -> compila el streaming de audio por UART
+#   make TEST=<nombre> upload         -> compila y carga el test indicado
 
 # Configuracion del microcontrolador (Arduino Nano usa ATmega328P)
 MCU = atmega328p
-F_CPU = 4000000UL
-BAUD = 9600
+F_CPU = 16000000UL
+BAUD = 115200
+
+# Frecuencia del bus I2C/TWI (MCP4725 soporta Fast Mode 400 kHz)
+TWI_FREQ = 400000UL
+
+# Test a compilar (override con: make TEST=<nombre_sin_.c>)
+TEST ?= test_audio_tones
 
 # Herramientas del compilador
 CC = avr-gcc
@@ -22,15 +33,15 @@ PORT := $(shell $(_PROJECT_ROOT)/scripts/detect_port.sh)
 PROGRAMMER = arduino
 
 # Flags de compilacion
-CFLAGS = -Wall -Os -mmcu=$(MCU) -DF_CPU=$(F_CPU) -DBAUD=$(BAUD) -I$(_DRIVERS_DIR)
+CFLAGS = -Wall -Os -mmcu=$(MCU) -DF_CPU=$(F_CPU) -DBAUD=$(BAUD) -DTWI_FREQ=$(TWI_FREQ) -I$(_DRIVERS_DIR)
 LDFLAGS = -mmcu=$(MCU)
 
 # Archivos del test
-TARGET = test_mcp4725_pam8403
-TEST_SRC = test_mcp4725_pam8403.c
+TARGET = $(TEST)
+TEST_SRC = $(TEST).c
 
 # Drivers necesarios
-DRIVER_SRC = $(_DRIVERS_DIR)/uart.c $(_DRIVERS_DIR)/i2c.c $(_DRIVERS_DIR)/mcp4725.c
+DRIVER_SRC = $(_DRIVERS_DIR)/uart.c $(_DRIVERS_DIR)/twi.c $(_DRIVERS_DIR)/mcp4725.c
 
 # Objeto
 OBJ = $(TEST_SRC:.c=.o) $(notdir $(DRIVER_SRC:.c=.o))
@@ -64,9 +75,12 @@ upload: $(HEX)
 	@echo "Puerto detectado: $(PORT)"
 	$(AVRDUDE) -p $(MCU) -c $(PROGRAMMER) -P $(PORT) -b 115200 -U flash:w:$(HEX):i
 
-# Limpiar archivos generados
+# Limpiar, recompilar y cargar al Arduino
+reload: clean upload
+
+# Limpiar archivos generados (todos los tests)
 clean:
-	rm -f $(OBJ) $(ELF) $(HEX)
+	rm -f *.o *.elf *.hex
 
 # Abrir monitor serial
 monitor:
@@ -76,4 +90,4 @@ monitor:
 minicom:
 	minicom -D $(PORT) -b $(BAUD)
 
-.PHONY: all size upload clean monitor minicom
+.PHONY: all size upload reload clean monitor minicom
