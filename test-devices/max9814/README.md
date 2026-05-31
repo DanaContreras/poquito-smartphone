@@ -119,6 +119,41 @@ Para eliminar archivos compilados:
 make clean
 ```
 
+## Test de Grabación (Audio Real)
+
+Este test permite capturar el sonido real del micrófono y guardarlo en un archivo `.wav` en la computadora para verificar la calidad del audio.
+
+### 1. Cargar el Sketch al Arduino
+A diferencia de los otros tests, este utiliza la IDE de Arduino para mayor compatibilidad:
+1. Abre el archivo `record_max9814/record_max9814.ino` con la IDE de Arduino.
+2. Selecciona tu placa (ej. Arduino Uno) y el puerto.
+3. Haz clic en **Subir**.
+
+### 2. Preparar la Computadora
+Necesitas Python y la librería `pyserial`:
+```bash
+pip install pyserial
+```
+
+### 3. Ejecutar la Grabación
+Ejecuta el script desde la carpeta del test:
+```bash
+python record_audio.py
+```
+*Si el script no detecta el puerto automáticamente, pásalo como argumento: `python record_audio.py /dev/ttyUSB0`*
+
+El script grabará **5 segundos** de audio y los guardará en `grabacion.wav`.
+
+### 4. Escuchar el resultado
+Puedes reproducir el archivo con cualquier reproductor o desde la terminal:
+```bash
+ffplay grabacion.wav  # Requiere ffmpeg
+# o
+aplay grabacion.wav   # Solo en Linux
+```
+
+---
+
 ## Referencias
 
 - [Datasheet MAX9814](https://www.analog.com/media/en/technical-documentation/data-sheets/max9814.pdf)
