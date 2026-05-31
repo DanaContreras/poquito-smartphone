@@ -3,3 +3,7 @@
 *.elf
 *.hex
 *.wav
+
+# Audios de prueba (no se versionan, pero se mantiene la carpeta)
+audio-samples/*
+!audio-samples/.gitkeep

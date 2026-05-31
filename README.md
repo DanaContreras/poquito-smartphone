@@ -72,7 +72,7 @@ poquito-smartphone/
 ├── drivers/                   # Drivers reutilizables para perifericos AVR
 │   ├── registers.h            # Definiciones de registros del ATmega328P
 │   ├── uart.h / uart.c        # Comunicacion serial UART
-│   ├── i2c.h / i2c.c          # Bus I2C/TWI
+│   ├── twi.h / twi.c          # Bus I2C/TWI (por interrupciones)
 │   ├── mcp4725.h / mcp4725.c  # DAC MCP4725 (via I2C)
 │   └── adc.h / adc.c          # Conversor analogico-digital
 ├── scripts/
@@ -83,7 +83,7 @@ poquito-smartphone/
     │   ├── Makefile
     │   └── README.md
     └── mcp4725_pam8403/       # Test DAC MCP4725 + amplificador PAM8403
-        ├── test_mcp4725_pam8403.c
+        ├── test_audio_tones.c
         ├── i2c_scanner.c      # Escaner de dispositivos I2C
         ├── Makefile
         └── README.md
@@ -137,3 +137,9 @@ make PORT=/dev/ttyUSB1 upload
 | `Ctrl+A` luego `d` | Detach (reconectar con `screen -r`) |
 
 > **No uses `Ctrl+C`** — no cierra `screen`, lo deja como proceso zombie ocupando el puerto serial.
+
+---
+
+## Reconocimientos
+
+- **Driver I2C/TWI** (`drivers/twi.{c,h}`): es el driver [avr-twi](https://github.com/scttnlsn/avr-twi) de [Scott Nelson](https://github.com/scttnlsn), integrado sin modificaciones. Implementa I2C por interrupciones para AVR.
