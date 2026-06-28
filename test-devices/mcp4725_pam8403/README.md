@@ -1,17 +1,17 @@
 # Test MCP4725 DAC + PAM8403 Amplificador
 
-Proyecto de prueba para generar audio usando el DAC MCP4725 y reproducirlo a traves del amplificador PAM8403.
+Validación del camino de **salida de audio**: el MCU envía muestras por I2C al DAC MCP4725, que entrega una señal analógica al amplificador PAM8403, que la reproduce en el altavoz.
 
 ## Componentes
 
-| Componente | Descripcion |
+| Componente | Descripción |
 |------------|-------------|
 | Arduino Nano | Microcontrolador ATmega328P |
 | MCP4725 | DAC I2C de 12 bits |
-| PAM8403 | Amplificador estereo Clase D 3W+3W |
-| Altavoz | 4-8 ohms |
+| PAM8403 | Amplificador estéreo Clase D 3W+3W |
+| Altavoz | 4–8 Ω |
 
-## Diagrama de Conexiones (Mermaid)
+## Conexiones
 
 ```mermaid
 graph LR
@@ -57,235 +57,142 @@ graph LR
     ROUT -->|Audio Out| SPK
 ```
 
-## Diagrama de Conexiones (Texto)
+### Arduino Nano → MCP4725
 
-```
-                    ARDUINO NANO
-                   +------------+
-                   |            |
-              A4 --|  SDA  -----+-----------------+
-              A5 --|  SCL  -----+---------------+ |
-              5V --|  VCC  -----+-------------+ | |
-             GND --|  GND  -----+-----------+ | | |
-                   |            |           | | | |
-                   +------------+           | | | |
-                                            | | | |
-                        MCP4725 DAC         | | | |
-                   +------------------+     | | | |
-                   |                  |     | | | |
-              GND -|- GND <-----------+-----+ | | |
-              VCC -|- VCC <-----------+-------+ | |
-              SCL -|- SCL <-----------+---------+ |
-              SDA -|- SDA <-----------+-----------+
-              OUT -|- OUT ----+       |
-                   |          |       |
-                   +----------|-------+
-                              |
-                              | (senal analogica 0-5V)
-                              |
-                      PAM8403 AMPLIFICADOR
-                   +------------------+
-                   |          |       |
-               L --|- L  <----+       |
-               R --|- R  <----+       |
-             GND --|- GND <-----------+-- (tierra comun)
-             VCC --|- VCC <-----------+-- (5V desde Arduino o fuente)
-                   |                  |
-              L+ --|- L+  ----|       |
-              L- --|- L-  ----|       |
-              R+ --|- R+  ----+--> ALTAVOZ (4-8 ohms)
-              R- --|- R-  ----|       |
-                   |                  |
-                   +------------------+
-
-
-    Flujo de senal:
-    ===============
-
-    [Arduino Nano]     [MCP4725]      [PAM8403]      [Altavoz]
-         |                |              |              |
-         |   I2C (SDA)    |              |              |
-         |--------------->|              |              |
-         |   I2C (SCL)    |              |              |
-         |--------------->|              |              |
-         |                |              |              |
-         |                |  Analogico   |              |
-         |                |------------->|              |
-         |                |   (0-5V)     |              |
-         |                |              |  Amplificado |
-         |                |              |------------->|
-         |                |              |   (3W max)   |
-```
-
-## Tabla de Conexiones
-
-### Arduino Nano -> MCP4725
-
-| Arduino Nano | MCP4725 | Descripcion |
+| Arduino Nano | MCP4725 | Descripción |
 |--------------|---------|-------------|
-| A4           | SDA     | Linea de datos I2C |
-| A5           | SCL     | Linea de reloj I2C |
-| 5V           | VCC     | Alimentacion |
-| GND          | GND     | Tierra |
+| A4 | SDA | Línea de datos I2C |
+| A5 | SCL | Línea de reloj I2C |
+| 5V | VCC | Alimentación |
+| GND | GND | Tierra |
 
-### MCP4725 -> PAM8403
+### MCP4725 → PAM8403
 
-| MCP4725 | PAM8403 | Descripcion |
+| MCP4725 | PAM8403 | Descripción |
 |---------|---------|-------------|
-| OUT     | L       | Entrada canal izquierdo |
-| OUT     | R       | Entrada canal derecho |
-| GND     | GND     | Tierra comun |
+| OUT | L | Entrada canal izquierdo |
+| OUT | R | Entrada canal derecho |
+| GND | GND | Tierra común |
 
-### PAM8403 -> Altavoz
+### PAM8403 → Altavoz
 
-| PAM8403 | Altavoz | Descripcion |
+| PAM8403 | Altavoz | Descripción |
 |---------|---------|-------------|
-| L+ / L- | +/-     | Canal izquierdo |
-| R+ / R- | +/-     | Canal derecho |
+| L+ / L- | +/- | Canal izquierdo |
+| R+ / R- | +/- | Canal derecho |
 
-## Sobre los Modulos
+## Sobre los Módulos
 
-### MCP4725 - DAC I2C
+**MCP4725 — DAC I2C de 12 bits**
+- Dirección I2C por defecto `0x60` (algunos módulos usan `0x62`).
+- Resolución: 4096 niveles (0–4095), salida 0 V a VCC.
+- Soporta Standard (100 kHz), Fast (400 kHz) y High Speed (3.4 MHz). Este test usa Fast Mode.
+- EEPROM interno: conserva el último valor al apagar.
+- [Datasheet](https://ww1.microchip.com/downloads/en/devicedoc/22039d.pdf)
 
-- **Tipo**: Convertidor Digital-Analogico de 12 bits
-- **Interfaz**: I2C (direccion por defecto 0x60)
-- **Resolucion**: 4096 niveles (0-4095)
-- **Voltaje de salida**: 0V a VCC (tipicamente 0-5V)
-- **Velocidad I2C**: 100kHz, 400kHz o 3.4MHz
-- **Caracteristica**: EEPROM interno para guardar valor al apagar
+**PAM8403 — Amplificador Clase D**
+- Estéreo 3W + 3W, alimentación 2.5–5.5 V (recomendado 5 V).
+- Impedancia de carga 4 u 8 Ω, ganancia 24 dB, eficiencia >90%.
+- Protecciones de cortocircuito y térmica integradas.
+- [Datasheet](https://www.mouser.com/datasheet/2/115/PAM8403-247318.pdf)
 
-### PAM8403 - Amplificador
+## Uso
 
-- **Tipo**: Amplificador estereo Clase D
-- **Potencia**: 3W + 3W (total 6W)
-- **Alimentacion**: 2.5V - 5.5V DC (recomendado 5V)
-- **Impedancia de carga**: 4 ohms u 8 ohms
-- **Ganancia**: 24dB maximo
-- **Proteccion**: Cortocircuito y termica integrada
-- **Eficiencia**: >90% (Clase D)
+> Requisitos previos: toolchain AVR, Python y ffmpeg. Ver [Configuración del Entorno](../../README.md#configuración-del-entorno) en el README principal.
 
-## Instalacion de Herramientas
+Este directorio contiene **tres programas** seleccionables con `TEST=` (o con los targets del Makefile):
 
-### Linux (Debian/Ubuntu)
-```bash
-sudo apt-get update
-sudo apt-get install gcc-avr avr-libc avrdude make screen
-```
+| Programa | Para qué | Cómo cargarlo | Baud |
+|---|---|---|---|
+| `i2c_scanner` | Verificar la dirección I2C del DAC antes de cualquier test | `make TEST=i2c_scanner upload` | 115200 |
+| `test_audio_tones` | Autotest: ondas y melodías vía menú serie interactivo | `make upload` (default) | 115200 |
+| `test_audio_stream` | Reproducir audio real desde la PC | `make stream` | 115200 |
 
-### Arch Linux
-```bash
-sudo pacman -S avr-gcc avr-libc avrdude make screen
-```
+### Diagnóstico I2C (`i2c_scanner`)
 
-### macOS
-```bash
-brew tap osx-cross/avr
-brew install avr-gcc avrdude
-```
-
-## Compilacion
+Útil la primera vez o cuando no hay audio: confirma que el MCP4725 responde y en qué dirección.
 
 ```bash
-make
-```
-
-Esto genera el archivo `.hex` listo para cargar al Arduino.
-
-## Cargar al Arduino
-
-1. Conecta tu Arduino Nano al puerto USB
-2. Carga el programa (el puerto se detecta automáticamente):
-
-```bash
-make upload
-```
-
-Para forzar un puerto específico:
-```bash
-make PORT=/dev/ttyUSB1 upload
-```
-
-## Monitorear la Salida
-
-```bash
+make TEST=i2c_scanner upload
 make monitor
 ```
 
-O usa el monitor serial de Arduino IDE a 115200 baudios.
+Salida esperada: una línea `Probando 0xNN: ENCONTRADO!` para cada dispositivo en el bus (típicamente `0x60`, o `0x62` en algunos módulos).
 
-### Cerrar el monitor
+### Test de ondas (`test_audio_tones`)
 
-| Atajo | Acción |
-|-------|--------|
-| `Ctrl+A` luego `k` | Cerrar sesión (confirmar con `y`) |
-| `Ctrl+A` luego `d` | Detach (reconectar con `screen -r`) |
-
-> **No uses `Ctrl+C`** — no cierra `screen`, lo deja como proceso zombie ocupando el puerto serial.
-
-## Comandos del Menu
-
-| Tecla | Accion |
-|-------|--------|
-| `1`   | Onda senoidal |
-| `2`   | Onda cuadrada |
-| `3`   | Onda triangular |
-| `4`   | Onda diente de sierra |
-| `5`   | Silencio |
-| `+`   | Aumentar frecuencia |
-| `-`   | Disminuir frecuencia |
-| `t`   | Test barrido de frecuencias |
-| `w`   | Test de todas las ondas |
-| `m`   | Reproducir melodia (Oda a la Alegria - Beethoven) |
-| `h`   | Mostrar menu de ayuda |
-
-## Que Esperar
-
-Al iniciar el programa:
-
-1. Se verifica la comunicacion I2C con el MCP4725
-2. Se muestra el menu de comandos
-3. Se inicia la generacion de onda senoidal por defecto
-
-### Sonidos esperados:
-
-- **Senoidal**: Tono puro, suave
-- **Cuadrada**: Tono mas aspero, con armonicos
-- **Triangular**: Tono intermedio
-- **Diente de sierra**: Similar a instrumentos de cuerda
-
-### Frecuencia aproximada:
-
-La frecuencia depende del delay configurado. Con 64 muestras por ciclo:
-- Delay 500us -> ~31 Hz (muy grave)
-- Delay 100us -> ~156 Hz (grave)
-- Delay 50us -> ~312 Hz (medio)
-
-## Solucion de Problemas
-
-### No hay sonido
-
-1. Verifica las conexiones fisicas
-2. Asegurate que el MCP4725 responde (mensaje "OK!" al iniciar)
-3. Verifica que el PAM8403 tiene alimentacion
-4. Prueba con el test de barrido (tecla `t`)
-
-### Error de comunicacion I2C
-
-1. Verifica SDA -> A4, SCL -> A5
-2. Algunos modulos MCP4725 usan direccion 0x62 en lugar de 0x60
-3. Modifica `MCP4725_ADDR` en `drivers/mcp4725.h` si es necesario
-
-### Sonido distorsionado
-
-1. Reduce el volumen si el PAM8403 tiene potenciometro
-2. Verifica que la alimentacion es estable (usa capacitores)
-3. Evita usar protoboard (causa distorsion)
-
-## Limpieza
+Generador interactivo de formas de onda para validar el camino DAC → PAM8403 → altavoz sin necesidad de una PC enviando datos.
 
 ```bash
-make clean
+make upload
+make monitor
 ```
+
+Menú de comandos (teclas en el monitor serial):
+
+| Tecla | Acción |
+|-------|--------|
+| `1` | Onda senoidal |
+| `2` | Onda cuadrada |
+| `3` | Onda triangular |
+| `4` | Onda diente de sierra |
+| `5` | Silencio |
+| `+` / `-` | Subir / bajar frecuencia |
+| `t` | Barrido de frecuencias |
+| `w` | Ciclar todas las ondas |
+| `m` | Melodía (Oda a la Alegría — Beethoven) |
+| `h` | Menú de ayuda |
+
+Sonidos esperados: senoidal pura/suave, cuadrada áspera con armónicos, triangular intermedia, diente de sierra similar a cuerdas.
+
+### Test de streaming (`test_audio_stream`)
+
+Reproduce audio real desde la PC. El firmware [`test_audio_stream.c`](test_audio_stream.c) recibe muestras PCM crudas (8-bit unsigned, mono) por UART y las vuelca al DAC en tiempo real. El script [`stream_audio.py`](stream_audio.py) convierte cualquier formato con `ffmpeg` y envía el stream.
+
+**Flujo:**
+
+```bash
+uv sync                                                  # 1 vez, desde la raíz del repo
+make stream                                              # carga el firmware test_audio_stream
+make play FILE=../../audio-samples/grabacion-prueba.flac # reproduce
+```
+
+> `audio-samples/` está gitignored (solo se versionea `.gitkeep`). Usá cualquier `.wav`, `.mp3`, `.ogg`, `.flac`, etc.
+
+**Sample rate efectivo:** lo fija el baud UART, `BAUD/10`. A 115200 → ~11520 Hz. Para otras frecuencias, `make play FILE=... "BAUD=230400"` o `uv run stream_audio.py <file> --baud 230400`.
+
+**Protocolo** (firmware ↔ script):
+
+```
+PC  → MCU: 0xAA               (sync request)
+MCU → PC : 0x55               (sync ack)
+PC  → MCU: 4 bytes length LE  (cantidad de muestras)
+PC  → MCU: N bytes PCM        (stream, ritmo dado por el baud)
+MCU → PC : 0x44               (done)
+```
+
+**Diagnóstico:**
+
+| Síntoma | Causa probable |
+|---|---|
+| `No llegó SYNC_ACK` | Firmware incorrecto cargado (no es `test_audio_stream`) |
+| `No llegó DONE_ACK` | Stream cortado: archivo muy largo o USB desconectado |
+| `Completado en X.XXs` | Éxito |
+
+## Solución de Problemas
+
+**No hay sonido**
+1. Verificar conexiones físicas (SDA→A4, SCL→A5).
+2. Correr `i2c_scanner` para confirmar que el MCP4725 responde y su dirección.
+3. Verificar alimentación del PAM8403.
+
+**Error de comunicación I2C**
+- Algunos módulos MCP4725 usan dirección `0x62` en lugar de `0x60`. Ajustar `MCP4725_ADDR` en [`drivers/mcp4725.h`](../../drivers/mcp4725.h).
+
+**Sonido distorsionado**
+1. Si el PAM8403 tiene potenciómetro, bajar el volumen.
+2. Verificar alimentación estable (usar capacitores de desacoplo).
+3. Evitar protoboard (introduce resistencia y ruido).
 
 ## Referencias
 

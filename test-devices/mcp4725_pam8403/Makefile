@@ -5,6 +5,8 @@
 #   make                              -> compila test_audio_tones (default)
 #   make TEST=test_audio_stream       -> compila el streaming de audio por UART
 #   make TEST=<nombre> upload         -> compila y carga el test indicado
+#   make stream                       -> carga test_audio_stream
+#   make play FILE=<ruta/al/audio>    -> reproduce audio via stream_audio.py
 
 # Configuracion del microcontrolador (Arduino Nano usa ATmega328P)
 MCU = atmega328p
@@ -90,4 +92,24 @@ monitor:
 minicom:
 	minicom -D $(PORT) -b $(BAUD)
 
-.PHONY: all size upload reload clean monitor minicom
+# Cargar el firmware de streaming de audio (atajo de TEST=test_audio_stream)
+stream:
+	$(MAKE) TEST=test_audio_stream upload
+
+# Reproducir un archivo de audio desde la PC (FILE=ruta/al/audio.flac)
+# Requiere haber corrido `uv sync` en la raiz del repo y cargado el firmware con `make stream`.
+play:
+	uv run stream_audio.py $(FILE)
+
+# Listar los targets disponibles
+help:
+	@echo "Targets disponibles:"
+	@echo "  make                       compila test_audio_tones (default)"
+	@echo "  make TEST=<name>           compila un test especifico (test_audio_tones | test_audio_stream | i2c_scanner)"
+	@echo "  make upload                carga el TEST actual (auto-deteccion de puerto)"
+	@echo "  make stream                carga test_audio_stream"
+	@echo "  make play FILE=<wav>       reproduce audio via stream_audio.py (ejecutar desde raiz: uv sync)"
+	@echo "  make monitor               screen a 115200"
+	@echo "  make reload | clean"
+
+.PHONY: all size upload reload clean monitor minicom stream play help

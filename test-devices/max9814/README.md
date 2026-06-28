@@ -1,158 +1,99 @@
-# Test MAX9814 - Módulo de Micrófono
+# Test MAX9814 — Módulo de Micrófono
 
-Proyecto de prueba para el módulo de micrófono MAX9814 con control automático de ganancia (AGC).
+Validación del camino de **entrada de audio**: el micrófono MAX9814 con AGC entrega una señal analógica al ADC del Arduino, que la digitaliza y la vuelca al monitor serial.
+
+## Componentes
+
+| Componente | Descripción |
+|------------|-------------|
+| Arduino Nano | Microcontrolador ATmega328P |
+| MAX9814 | Micrófono electret con amplificador y AGC |
+| (opcional) Altavoz / PC | Para escuchar la grabación de prueba |
 
 ## Conexiones
 
-| Arduino | MAX9814 |
-|---------|---------|
-| A0      | OUT     |
-| 5V      | VDD     |
-| GND     | GND     |
+```mermaid
+graph LR
+    subgraph Arduino Nano
+        A0[A0 - ADC]
+        V5[5V]
+        GND1[GND]
+    end
 
-## Verificación de Conexiones ✓
+    subgraph MAX9814
+        OUT[OUT]
+        VDD[VDD]
+        GND2[GND]
+    end
 
-Las conexiones especificadas son **correctas**:
-- **OUT → A0**: El pin OUT entrega la señal analógica que debe leerse con un pin ADC
-- **VDD → 5V**: El módulo acepta voltaje de 2.7V a 5.5V
-- **GND → GND**: Conexión a tierra común
-
-## Sobre el Módulo MAX9814
-
-- **Tipo**: Amplificador de micrófono electret con AGC (Auto Gain Control)
-- **Salida**: Señal analógica 0-2.45V (promedio 1.25V en silencio)
-- **Ganancia**: Ajustable 40dB, 50dB o 60dB (pin Gain)
-- **Respuesta**: 20Hz - 20kHz
-- **Característica importante**: Tiene offset de 1.25V en silencio (no es cero)
-
-## Instalación de Herramientas
-
-### Linux (Debian/Ubuntu)
-```bash
-sudo apt-get update
-sudo apt-get install gcc-avr avr-libc avrdude make
+    OUT -->|senal analogica 0-2.45V| A0
+    V5 -->|5V| VDD
+    GND1 -->|GND| GND2
 ```
 
-### Arch Linux
-```bash
-sudo pacman -S avr-gcc avr-libc avrdude make
-```
+| Arduino | MAX9814 | Descripción |
+|---------|---------|-------------|
+| A0 | OUT | Salida analógica al ADC |
+| 5V | VDD | Alimentación (2.7–5.5 V) |
+| GND | GND | Tierra común |
 
-### macOS
-```bash
-brew tap osx-cross/avr
-brew install avr-gcc avrdude
-```
+## Sobre el Módulo
 
-## Compilación
+**MAX9814 — Amplificador de micrófono con AGC**
+- Salida analógica 0–2.45 V (offset de 1.25 V en silencio, **no es cero**).
+- Ganancia seleccionable 40/50/60 dB vía pin `Gain` (flotante = 60 dB).
+- Respuesta en frecuencia: 20 Hz – 20 kHz.
+- Pin `AR` (attack/release ratio): flotante = 1:4000, VDD = 1:2000, GND = 1:500.
+- [Datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/max9814.pdf)
 
-Para compilar el código:
-```bash
-make
-```
+## Uso
 
-Esto generará el archivo `.hex` listo para cargar al Arduino.
+> Requisitos previos: toolchain AVR, Python. Ver [Configuración del Entorno](../../README.md#configuración-del-entorno) en el README principal.
 
-## Cargar al Arduino
+Este directorio contiene **dos pruebas** que usan toolchains distintos:
 
-1. Conecta tu Arduino al puerto USB
-2. Carga el programa (el puerto se detecta automáticamente):
+| Test | Toolchain | Para qué | Baud |
+|---|---|---|---|
+| `test_max9814.c` | avr-gcc + Makefile | Monitor en vivo del ADC (raw, min/max, peak-to-peak) | **9600** |
+| `record_max9814/` | Arduino IDE | Grabación de audio real a archivo `.wav` | **115200** |
+
+> ⚠️ **Inconsistencia de baud conocida:** los dos tests usan bauds distintos. El Makefile de `test_max9814.c` está fijado a 9600, mientras que `record_max9814.ino` hardcodea `Serial.begin(115200)`. Conectar el monitor al baud que corresponde a cada programa o las lecturas son ilegibles.
+
+### Test en vivo (`test_max9814.c`)
+
 ```bash
 make upload
+make monitor        # 9600 baud
 ```
 
-Para forzar un puerto específico:
-```bash
-make PORT=/dev/ttyUSB1 upload
+Salida esperada en el monitor serial:
+
+```
+Raw: 512 | Min: 500 | Max: 524 | Peak-to-Peak: 24
 ```
 
-## Monitorear la Salida
+Valores típicos:
+- **Silencio:** Raw ~512 (1.25 V), Peak-to-Peak bajo (5–20).
+- **Hablar normal:** Peak-to-Peak 50–200.
+- **Sonido fuerte:** Peak-to-Peak 200–500+.
 
-Para ver los datos del micrófono en tiempo real:
-```bash
-make monitor
-```
+Si Raw está alrededor de 512 (±50) en silencio, el módulo funciona correctamente.
 
-O usa el monitor serial de Arduino IDE a 9600 baudios.
+### Grabación a WAV (`record_max9814/`)
 
-### Cerrar el monitor
+Captura 5 segundos de audio y los guarda en `grabacion.wav` en la PC. Ver instructivo detallado en [`record_max9814/README.md`](record_max9814/README.md).
 
-| Atajo | Acción |
-|-------|--------|
-| `Ctrl+A` luego `k` | Cerrar sesión (confirmar con `y`) |
-| `Ctrl+A` luego `d` | Detach (reconectar con `screen -r`) |
+## Solución de Problemas
 
-> **No uses `Ctrl+C`** — no cierra `screen`, lo deja como proceso zombie ocupando el puerto serial.
+**Raw está en 0 o en 1023 fijo**
+- Verificar OUT → A0 y alimentación del módulo.
 
-## Qué Esperar
+**No hay variación (Peak-to-Peak siempre 0)**
+- Asegurarse de que el micrófono está recibiendo sonido (hablar cerca).
+- Revisar soldaduras del módulo.
 
-El programa mostrará en el monitor serial:
-- **Raw**: Valor ADC instantáneo (0-1023)
-- **Min/Max**: Valores mínimo y máximo durante la ventana de muestreo
-- **Peak-to-Peak**: Diferencia entre pico máximo y mínimo
-
-### Valores Típicos:
-- **Silencio**: Raw ~512 (1.25V), Peak-to-Peak bajo (5-20)
-- **Hablar normal**: Peak-to-Peak 50-200
-- **Sonido fuerte**: Peak-to-Peak 200-500+
-
-Si el Raw está alrededor de 512 (±50) en silencio, el módulo funciona correctamente.
-
-## Ajustes Opcionales del Módulo
-
-Si tu módulo tiene pines adicionales:
-
-- **Pin Gain** (ganancia máxima):
-  - Flotante: 60dB
-  - GND: 50dB
-  - VDD: 40dB
-
-- **Pin AR** (attack/release ratio):
-  - Flotante: 1:4000
-  - VDD: 1:2000
-  - GND: 1:500
-
-## Limpieza
-
-Para eliminar archivos compilados:
-```bash
-make clean
-```
-
-## Test de Grabación (Audio Real)
-
-Este test permite capturar el sonido real del micrófono y guardarlo en un archivo `.wav` en la computadora para verificar la calidad del audio.
-
-### 1. Cargar el Sketch al Arduino
-A diferencia de los otros tests, este utiliza la IDE de Arduino para mayor compatibilidad:
-1. Abre el archivo `record_max9814/record_max9814.ino` con la IDE de Arduino.
-2. Selecciona tu placa (ej. Arduino Uno) y el puerto.
-3. Haz clic en **Subir**.
-
-### 2. Preparar la Computadora
-Necesitas Python y la librería `pyserial`:
-```bash
-pip install pyserial
-```
-
-### 3. Ejecutar la Grabación
-Ejecuta el script desde la carpeta del test:
-```bash
-python record_audio.py
-```
-*Si el script no detecta el puerto automáticamente, pásalo como argumento: `python record_audio.py /dev/ttyUSB0`*
-
-El script grabará **5 segundos** de audio y los guardará en `grabacion.wav`.
-
-### 4. Escuchar el resultado
-Puedes reproducir el archivo con cualquier reproductor o desde la terminal:
-```bash
-ffplay grabacion.wav  # Requiere ffmpeg
-# o
-aplay grabacion.wav   # Solo en Linux
-```
-
----
+**La grabación suena saturada o muy baja**
+- Ajustar ganancia con el pin `Gain`: GND = 50 dB, VDD = 40 dB (por defecto flotante = 60 dB).
 
 ## Referencias
 

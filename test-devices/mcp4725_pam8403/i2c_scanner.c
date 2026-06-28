@@ -6,28 +6,11 @@
 #include <stdint.h>
 #include <util/delay.h>
 #include "../../drivers/registers.h"
-
-#define UBRR_VALUE ((F_CPU / (16UL * BAUD)) - 1)
+#include "../../drivers/uart.h"
 
 #define TIMEOUT_MAX 10000  // Timeout para operaciones I2C
 
-// UART
-void uart_init(void) {
-    UBRR0H = (uint8_t)(UBRR_VALUE >> 8);
-    UBRR0L = (uint8_t)UBRR_VALUE;
-    UCSR0B = (1 << RXEN0) | (1 << TXEN0);
-    UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
-}
-
-void uart_transmit(uint8_t data) {
-    while (!(UCSR0A & (1 << UDRE0)));
-    UDR0 = data;
-}
-
-void uart_print(const char* str) {
-    while (*str) uart_transmit(*str++);
-}
-
+// Hex no esta en drivers/uart.h; solo se usa en este scanner.
 void uart_print_hex(uint8_t val) {
     const char hex[] = "0123456789ABCDEF";
     uart_transmit('0');
@@ -42,7 +25,7 @@ void i2c_init(void) {
     PORTC |= (1 << PORTC4) | (1 << PORTC5);
     
     TWSR = 0;
-    TWBR = 12;  // 100kHz con F_CPU=4MHz
+    TWBR = 12;  // 400kHz con F_CPU=16MHz (Fast Mode)
     TWCR = (1 << TWEN);
 }
 

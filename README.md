@@ -64,36 +64,11 @@ Se están validando los módulos de hardware de forma independiente. Los tests c
 
 ---
 
-## Estructura del Repositorio
+## Configuración del Entorno
 
-```
-poquito-smartphone/
-├── readme.md
-├── drivers/                   # Drivers reutilizables para perifericos AVR
-│   ├── registers.h            # Definiciones de registros del ATmega328P
-│   ├── uart.h / uart.c        # Comunicacion serial UART
-│   ├── twi.h / twi.c          # Bus I2C/TWI (por interrupciones)
-│   ├── mcp4725.h / mcp4725.c  # DAC MCP4725 (via I2C)
-│   └── adc.h / adc.c          # Conversor analogico-digital
-├── scripts/
-│   └── detect_port.sh         # Auto-deteccion del puerto USB del Arduino
-└── test-devices/
-    ├── max9814/               # Test microfono MAX9814
-    │   ├── test_max9814.c
-    │   ├── Makefile
-    │   └── README.md
-    └── mcp4725_pam8403/       # Test DAC MCP4725 + amplificador PAM8403
-        ├── test_audio_tones.c
-        ├── i2c_scanner.c      # Escaner de dispositivos I2C
-        ├── Makefile
-        └── README.md
-```
+Esta sección es la **única fuente de verdad** para la instalación de herramientas. Los READMEs de cada test remiten aquí.
 
----
-
-## Compilar y Cargar un Test
-
-Cada subdirectorio en `test-devices/` tiene su propio `Makefile`. Requisitos:
+### Toolchain AVR (compilar y cargar firmware)
 
 **Linux (Debian/Ubuntu)**
 ```bash
@@ -110,24 +85,28 @@ sudo pacman -S avr-gcc avr-libc avrdude make screen
 brew tap osx-cross/avr && brew install avr-gcc avrdude
 ```
 
-Luego, dentro del directorio del test:
+### Python (scripts de testing)
+
+El proyecto usa [`uv`](https://docs.astral.sh/uv/) para gestionar las dependencias de Python. Desde la raíz del repo:
+
 ```bash
-make          # Compilar
-make upload   # Cargar al Arduino (puerto detectado automaticamente)
-make monitor  # Monitor serial (9600 baud)
-make clean    # Limpiar archivos generados
+uv sync                                              # crea .venv/ e instala pyserial, typer, rich
+uv run <script>.py ...                               # ejecuta un script usando el entorno del repo
 ```
 
-### Auto-detección de Puerto USB
+`uv` detecta el `pyproject.toml` de la raíz desde cualquier subdirectorio, así que no importa desde dónde se invoque.
 
-El puerto serial se detecta automáticamente al hacer `make upload` mediante `scripts/detect_port.sh`. El script busca dispositivos `/dev/ttyACM*` y `/dev/ttyUSB*`, priorizando chips conocidos (CH340, FTDI, Arduino oficial).
+### ffmpeg
 
-Para forzar un puerto manualmente:
+Algunos scripts (p. ej. `stream_audio.py`) usan `ffmpeg` para convertir formatos de audio. Instalar con el gestor de paquetes del sistema:
+
 ```bash
-make PORT=/dev/ttyUSB1 upload
+sudo apt install ffmpeg        # Debian/Ubuntu
+sudo pacman -S ffmpeg          # Arch
+brew install ffmpeg            # macOS
 ```
 
-### Monitor Serial
+### Monitor Serial (`screen`)
 
 `make monitor` abre una sesión de `screen`. Para cerrarla correctamente:
 
@@ -137,6 +116,72 @@ make PORT=/dev/ttyUSB1 upload
 | `Ctrl+A` luego `d` | Detach (reconectar con `screen -r`) |
 
 > **No uses `Ctrl+C`** — no cierra `screen`, lo deja como proceso zombie ocupando el puerto serial.
+
+---
+
+## Estructura del Repositorio
+
+```
+poquito-smartphone/
+├── README.md
+├── pyproject.toml                # dependencias de Python (gestionadas con uv)
+├── drivers/                      # drivers reutilizables para periféricos AVR
+│   ├── registers.h               # definiciones de registros del ATmega328P
+│   ├── uart.h / uart.c           # comunicación serial UART
+│   ├── twi.h / twi.c             # bus I2C/TWI (por interrupciones)
+│   ├── mcp4725.h / mcp4725.c     # DAC MCP4725 (vía I2C)
+│   └── adc.h / adc.c             # conversor analógico-digital
+├── scripts/
+│   └── detect_port.sh            # auto-detección del puerto USB del Arduino
+├── test-devices/
+│   ├── max9814/                  # test micrófono MAX9814
+│   │   ├── test_max9814.c
+│   │   ├── Makefile
+│   │   ├── README.md
+│   │   └── record_max9814/       # grabación de audio a WAV
+│   │       ├── record_max9814.ino
+│   │       ├── record_audio.py
+│   │       └── README.md
+│   └── mcp4725_pam8403/          # test DAC MCP4725 + amplificador PAM8403
+│       ├── test_audio_tones.c    # generador de ondas (menú serie interactivo)
+│       ├── test_audio_stream.c   # streaming de audio por UART
+│       ├── i2c_scanner.c         # escáner de dispositivos I2C
+│       ├── stream_audio.py       # CLI que envía audio al firmware de streaming
+│       ├── Makefile
+│       └── README.md
+└── audio-samples/                # muestras para probar el streaming (gitignored, solo .gitkeep)
+```
+
+---
+
+## Compilar y Cargar un Test
+
+Cada subdirectorio en `test-devices/` tiene su propio `Makefile`. Dentro del directorio del test:
+
+```bash
+make          # Compilar
+make upload   # Cargar al Arduino (puerto detectado automáticamente)
+make monitor  # Monitor serial (9600 o 115200 baud según el test)
+make clean    # Limpiar archivos generados
+```
+
+Para forzar un puerto manualmente:
+```bash
+make PORT=/dev/ttyUSB1 upload
+```
+
+Varios tests comparten un mismo `Makefile` y se seleccionan con `TEST=`:
+```bash
+make TEST=test_audio_stream upload     # en test-devices/mcp4725_pam8403/
+```
+
+### Auto-detección de Puerto USB
+
+El puerto serial se detecta automáticamente al hacer `make upload` mediante `scripts/detect_port.sh`. El script busca dispositivos `/dev/ttyACM*` y `/dev/ttyUSB*`, priorizando chips conocidos (CH340, FTDI, Arduino oficial).
+
+### Monitor Serial
+
+`make monitor` abre una sesión de `screen`. Ver los [atajos en Configuración del Entorno](#monitor-serial-screen).
 
 ---
 
