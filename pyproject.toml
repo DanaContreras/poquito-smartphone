@@ -1,0 +1,13 @@
+# Dependencias de Python para los scripts de testing del proyecto.
+# Se instalan con:  uv sync
+# (uv crea un .venv/ en la raiz del repo; los scripts se corren con uv run)
+
+[project]
+name = "poquito-smartphone-tools"
+version = "0"
+requires-python = ">=3.9"
+dependencies = [
+    "pyserial>=3.5",   # usado por ambos scripts (stream_audio.py y record_audio.py)
+    "typer>=0.12",     # stream_audio.py
+    "rich>=13.0",      # stream_audio.py
+]

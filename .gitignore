@@ -7,3 +7,8 @@
 # Audios de prueba (no se versionan, pero se mantiene la carpeta)
 audio-samples/*
 !audio-samples/.gitkeep
+
+# Python (entorno de uv y caches)
+.venv/
+__pycache__/
+*.pyc

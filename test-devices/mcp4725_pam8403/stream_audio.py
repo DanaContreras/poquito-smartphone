@@ -8,12 +8,12 @@ El firmware lee cada byte y lo escribe al DAC MCP4725 en tiempo real. El
 sample rate efectivo lo fija el propio UART: BAUD/10 muestras por segundo.
 
 Requisitos:
-  - pyserial, typer, rich  (pip install -r scripts/requirements.txt)
+  - pyserial, typer, rich  (uv sync desde la raiz del repo)
   - ffmpeg                 (paquete del sistema)
 
 Uso tipico:
-  ./stream_audio.py audio.mp3
-  ./stream_audio.py audio.wav --port /dev/ttyUSB0
+  uv run stream_audio.py audio.mp3
+  uv run stream_audio.py audio.wav --port /dev/ttyUSB0
 """
 
 import shutil
@@ -26,7 +26,7 @@ from typing import Optional
 try:
     import serial
 except ImportError:
-    sys.exit("Falta pyserial. Instalalo con: pip install -r scripts/requirements.txt")
+    sys.exit("Falta pyserial. Instalalo con: uv sync (desde la raiz del repo)")
 
 try:
     import typer
@@ -42,7 +42,7 @@ try:
     from rich.table import Table
 except ImportError:
     sys.exit(
-        "Faltan dependencias. Instalalas con: pip install -r scripts/requirements.txt"
+        "Faltan dependencias. Instalalas con: uv sync (desde la raiz del repo)"
     )
 
 SYNC_REQ = b"\xaa"
@@ -58,7 +58,9 @@ app = typer.Typer(add_completion=False, rich_markup_mode="rich")
 
 
 def detect_port() -> str:
-    script = Path(__file__).parent / "detect_port.sh"
+    # Raiz del repo: test-devices/mcp4725_pam8403/stream_audio.py -> parents[2]
+    project_root = Path(__file__).resolve().parents[2]
+    script = project_root / "scripts" / "detect_port.sh"
     result = subprocess.run([str(script)], capture_output=True, text=True, check=True)
     port = result.stdout.strip()
     if not port:

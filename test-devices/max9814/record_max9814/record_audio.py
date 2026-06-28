@@ -3,6 +3,7 @@ import wave
 import time
 import sys
 import os
+from pathlib import Path
 
 # Configuración por defecto
 BAUD_RATE = 115200
@@ -12,15 +13,17 @@ OUTPUT_FILENAME = 'grabacion.wav'
 
 def find_arduino_port():
     """Intenta detectar el puerto serie del Arduino."""
-    if os.path.exists('../../scripts/detect_port.sh'):
+    # Raiz del repo: record_max9814/record_audio.py -> parents[3]
+    detect_script = Path(__file__).resolve().parents[3] / "scripts" / "detect_port.sh"
+    if detect_script.exists():
         import subprocess
         try:
-            port = subprocess.check_output(['bash', '../../scripts/detect_port.sh']).decode('utf-8').strip()
+            port = subprocess.check_output(['bash', str(detect_script)]).decode('utf-8').strip()
             if port:
                 return port
         except:
             pass
-    
+
     # Fallback comunes en Linux
     for i in range(4):
         port = f'/dev/ttyUSB{i}'
