@@ -13,6 +13,8 @@ Validación del camino de **salida de audio**: el MCU envía muestras por I2C al
 
 ## Conexiones
 
+> **Configuración mono (1 altavoz).** Este proyecto usa un solo altavoz; el canal derecho del PAM8403 queda sin usar.
+
 ```mermaid
 graph LR
     subgraph Arduino Nano
@@ -31,12 +33,14 @@ graph LR
     end
 
     subgraph PAM8403 Amplificador
-        L[L - Left In]
-        R[R - Right In]
+        INL[INL]
+        INR[INR - sin usar]
         GND3[GND]
         VCC2[VCC]
-        LOUT[L+ L-]
-        ROUT[R+ R-]
+        OUTLP[L+]
+        OUTLN[L-]
+        OUTRP[R+ - sin usar]
+        OUTRN[R- - sin usar]
     end
 
     subgraph Altavoz
@@ -50,11 +54,10 @@ graph LR
     GND1 -->|GND| GND2
     GND1 -->|GND| GND3
 
-    OUT -->|Audio| L
-    OUT -->|Audio| R
+    OUT -->|audio analógico| INL
 
-    LOUT -->|Audio Out| SPK
-    ROUT -->|Audio Out| SPK
+    OUTLP -->|salida BTL| SPK
+    OUTLN -->|salida BTL| SPK
 ```
 
 ### Arduino Nano → MCP4725
@@ -70,16 +73,19 @@ graph LR
 
 | MCP4725 | PAM8403 | Descripción |
 |---------|---------|-------------|
-| OUT | L | Entrada canal izquierdo |
-| OUT | R | Entrada canal derecho |
+| OUT | INL | Audio al canal izquierdo (único canal usado) |
 | GND | GND | Tierra común |
+
+> El módulo PAM8403 ya trae capacitores de acople de 0.47 µF en serie con `INL`/`INR`, **no hace falta** agregar capacitor externo para bloquear el DC del MCP4725. El pin `INR` se deja flotante.
 
 ### PAM8403 → Altavoz
 
 | PAM8403 | Altavoz | Descripción |
 |---------|---------|-------------|
-| L+ / L- | +/- | Canal izquierdo |
-| R+ / R- | +/- | Canal derecho |
+| `+OUT_L` | + | Salida BTL positiva del canal L |
+| `-OUT_L` | − | Salida BTL negativa del canal L |
+
+> El altavoz se conecta entre `+OUT_L` y `-OUT_L` (topología BTL, **sin tierra común**). Los pines `+OUT_R` y `-OUT_R` se dejan sin conectar. El PAM8403 es filterless: el altavoz va directo, sin filtro LC.
 
 ## Sobre los Módulos
 
@@ -91,10 +97,14 @@ graph LR
 - [Datasheet](https://ww1.microchip.com/downloads/en/devicedoc/22039d.pdf)
 
 **PAM8403 — Amplificador Clase D**
-- Estéreo 3W + 3W, alimentación 2.5–5.5 V (recomendado 5 V).
-- Impedancia de carga 4 u 8 Ω, ganancia 24 dB, eficiencia >90%.
+- Estéreo 3W + 3W (solo se usa el canal L en este proyecto), alimentación 2.5–5.5 V (recomendado 5 V).
+- **Salidas BTL (Bridge-Tied Load):** el altavoz se conecta entre `+OUT_x` y `-OUT_x`, sin tierra común.
+- **Filterless:** el altavoz va directo a las salidas, sin filtro LC (solo recomendable si el cable al altavoz pasa de ~10 cm).
+- **Impedancia de carga:** 4 Ω (3 W full) u 8 Ω (~1.5 W). 
+- **Ganancia interna 24 dB** — con la salida del MCP4725 (~2 Vpp en 2.5 V midrail) el volumen puede ser excesivo. Si el módulo trae potenciómetro, usarlo; si no, atenuar por software o con divisor resistivo en la entrada.
+- Capacitores de acople de entrada (0.47 µF) integrados en el módulo.
 - Protecciones de cortocircuito y térmica integradas.
-- [Datasheet](https://www.mouser.com/datasheet/2/115/PAM8403-247318.pdf)
+- [Datasheet](https://www.mouser.com/datasheet/2/115/PAM8403-247318.pdf) · [Guía del módulo (Components101)](https://components101.com/modules/pam8403-stereo-audio-amplifier-module)
 
 ## Uso
 
@@ -127,21 +137,6 @@ Generador interactivo de formas de onda para validar el camino DAC → PAM8403 �
 make upload
 make monitor
 ```
-
-Menú de comandos (teclas en el monitor serial):
-
-| Tecla | Acción |
-|-------|--------|
-| `1` | Onda senoidal |
-| `2` | Onda cuadrada |
-| `3` | Onda triangular |
-| `4` | Onda diente de sierra |
-| `5` | Silencio |
-| `+` / `-` | Subir / bajar frecuencia |
-| `t` | Barrido de frecuencias |
-| `w` | Ciclar todas las ondas |
-| `m` | Melodía (Oda a la Alegría — Beethoven) |
-| `h` | Menú de ayuda |
 
 Sonidos esperados: senoidal pura/suave, cuadrada áspera con armónicos, triangular intermedia, diente de sierra similar a cuerdas.
 
@@ -190,9 +185,21 @@ MCU → PC : 0x44               (done)
 - Algunos módulos MCP4725 usan dirección `0x62` en lugar de `0x60`. Ajustar `MCP4725_ADDR` en [`drivers/mcp4725.h`](../../drivers/mcp4725.h).
 
 **Sonido distorsionado**
-1. Si el PAM8403 tiene potenciómetro, bajar el volumen.
-2. Verificar alimentación estable (usar capacitores de desacoplo).
-3. Evitar protoboard (introduce resistencia y ruido).
+1. Si el PAM8403 tiene potenciómetro, bajar el volumen (la ganancia interna de 24 dB + la salida full-scale del MCP4725 satura fácilmente).
+2. Atenuar por software: escribir en el DAC `valor < 4095` (p. ej. multiplicar la muestra por 0.5 antes del `<< 4`).
+3. Verificar alimentación estable (usar capacitores de desacoplo).
+4. Evitar protoboard (introduce resistencia y ruido).
+
+**El Arduino se resetea o el audio se corta en los picos**
+- El PAM8403 puede demandar >1 A en picos a volumen alto; el 5 V del Arduino Nano (vía USB o regulador de a bordo) **no es suficiente** y la línea cae, reseteando el MCU.
+- Soluciones:
+  1. Alimentar el PAM8403 desde una fuente de 5 V externa (manteniendo GND común con el Arduino).
+  2. Si se comparte el 5 V del Arduino, agregar un capacitor electrolítico grande (470–1000 µF) lo más cerca posible de los pines `VCC`/`GND` del módulo PAM8403.
+  3. Bajar el volumen.
+
+**Zumbido o ruido constante**
+- Asegurar tierras comunes (GND del Arduino = GND del PAM8403 = GND del MCP4725).
+- Mantener los cables de entrada (`INL`) cortos y alejados de los cables del altavoz.
 
 ## Referencias
 
