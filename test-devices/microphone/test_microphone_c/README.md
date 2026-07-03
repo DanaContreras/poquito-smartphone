@@ -42,7 +42,7 @@ Seleccionar el programa en el `Makefile` (`TARGET` y `TEST_SRC`) y ejecutar:
 
 ```bash
 make upload                              # compila y flashea al Arduino
-uv run ../scripts/record_audio.py  # graba 5 s -> grabacion.wav (solo record_max9814)
+uv run ../record_audio.py  # graba 5 s -> grabacion.wav (solo record_max9814)
 make monitor                             # ver el ADC en vivo (solo test_max9814)
 ```
 

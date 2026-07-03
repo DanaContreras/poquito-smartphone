@@ -62,4 +62,35 @@
 #define ADPS1   1
 #define ADPS0   0
 
+/* Timer1 (16-bit) - 0x80 */
+
+#define TCCR1A  REG8(0x80)
+#define TCCR1B  REG8(0x81)
+#define TCCR1C  REG8(0x82)
+#define TCNT1   REG16(0x84)
+#define ICR1    REG16(0x86)
+#define OCR1A   REG16(0x88)
+#define OCR1B   REG16(0x8A)
+
+#define TIMSK1  REG8(0x6F)   /* mascara de interrupciones del timer 1 */
+#define TIFR1   REG8(0x36)   /* banderas del timer 1 (polling)   */
+
+/* bits de TCCR1A (salida PWM; no se usan en CTC del micro) */
+#define WGM10   0
+#define WGM11   1
+#define COM1B1  5
+#define COM1A1  7
+
+/* bits de TCCR1B */
+#define WGM12   3
+#define WGM13   4
+#define CS10    0
+#define CS11    1
+#define CS12    2
+
+/* bits de TIMSK1 / TIFR1 */
+#define TOIE1   0   /* overflow interrupt enable */
+#define OCIE1A  1   /* compare-match A interrupt enable */
+#define OCF1A   1   /* bandera compare-match A (polling) */
+
 #endif

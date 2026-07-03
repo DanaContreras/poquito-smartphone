@@ -16,7 +16,7 @@ Conectar el módulo MAX9814 al Arduino de la siguiente manera:
 
 ## 2. Requisitos Previos
 
-Se necesita tener Python instalado en tu computadora y la librería `pyserial`:
+Se necesita tener Python instalado en la computadora y la librería `pyserial`:
 
 ```bash
 pip install pyserial
@@ -32,13 +32,13 @@ pip install pyserial
 3. Hacer clic en el botón **Subir** (la flecha).
 
 ### Paso B: Ejecutar la grabación
-Abrir una terminal en esta carpeta (`test-devices/max9814/record_max9814/`) y ejecutar:
+Abrir una terminal **en esta carpeta** (`test-devices/microphone/test_microphone_ino/`) y ejecutar el script compartido. El `.wav` se guarda en la carpeta desde la que se ejecuta (es decir, esta):
 
 ```bash
-python record_audio.py
+uv run ../record_audio.py
 ```
 
-*Nota: El script intentará detectar el puerto automáticamente. Si falla, puedes especificarlo manualmente, por ejemplo: `python record_audio.py /dev/ttyUSB0`.*
+*Nota: El script intentará detectar el puerto automáticamente. Si falla, puede especificarse manualmente, por ejemplo: `uv run ../record_audio.py /dev/ttyUSB0`.*
 
 ### Paso C: Resultado
 El script grabará **5 segundos** de audio. Al finalizar, se verá un mensaje indicando que se ha guardado el archivo:
@@ -54,7 +54,7 @@ Se puede reproducir el archivo con cualquier reproductor multimedia o desde la t
 # En Linux
 aplay grabacion.wav
 
-# Si tienes ffmpeg instalado
+# Si ffmpeg está instalado
 ffplay grabacion.wav
 ```
 

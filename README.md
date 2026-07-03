@@ -18,8 +18,8 @@ Se están validando los módulos de hardware de forma independiente. Los tests c
 
 | Componente | Test | Estado |
 | :--- | :--- | :--- |
-| Micrófono MAX9814 | [`test-devices/max9814/`](test-devices/max9814/) | En progreso |
-| DAC MCP4725 + Amplificador PAM8403 | [`test-devices/mcp4725_pam8403/`](test-devices/mcp4725_pam8403/) | En progreso |
+| Micrófono MAX9814 | [`test-devices/microphone/`](test-devices/microphone/) | En progreso |
+| DAC MCP4725 + Amplificador PAM8403 | [`test-devices/speaker/`](test-devices/speaker/) | En progreso |
 
 ---
 
@@ -124,32 +124,36 @@ brew install ffmpeg            # macOS
 ```
 poquito-smartphone/
 ├── README.md
-├── pyproject.toml                # dependencias de Python (gestionadas con uv)
-├── drivers/                      # drivers reutilizables para periféricos AVR
-│   ├── registers.h               # definiciones de registros del ATmega328P
-│   ├── uart.h / uart.c           # comunicación serial UART
-│   ├── twi.h / twi.c             # bus I2C/TWI (por interrupciones)
-│   ├── mcp4725.h / mcp4725.c     # DAC MCP4725 (vía I2C)
-│   └── adc.h / adc.c             # conversor analógico-digital
+├── pyproject.toml                    # dependencias de Python (gestionadas con uv)
+├── uv.lock                           # versiones exactas de las dependencias
+├── drivers/                          # drivers reutilizables para periféricos AVR
+│   ├── registers.h                   # definiciones de registros del ATmega328P
+│   ├── uart.h / uart.c               # comunicación serial UART
+│   ├── twi.h / twi.c                 # bus I2C/TWI (por interrupciones)
+│   ├── mcp4725.h / mcp4725.c         # DAC MCP4725 (vía I2C)
+│   └── adc.h / adc.c                 # conversor analógico-digital
 ├── scripts/
-│   └── detect_port.sh            # auto-detección del puerto USB del Arduino
+│   ├── detect_port.sh                # auto-detección del puerto USB del Arduino
+│   └── record_audio.py               # graba audio por UART a .wav (compartido por los tests)
 ├── test-devices/
-│   ├── max9814/                  # test micrófono MAX9814
-│   │   ├── test_max9814.c
-│   │   ├── Makefile
-│   │   ├── README.md
-│   │   └── record_max9814/       # grabación de audio a WAV
+│   ├── microphone/                   # test del micrófono MAX9814
+│   │   ├── test_microphone_c/        # versión bare-metal en C
+│   │   │   ├── record_max9814.c      # grabación a 8 kHz (Timer1 CTC + ISR)
+│   │   │   ├── test_max9814.c        # test básico: lee el ADC y lo imprime por serie
+│   │   │   ├── Makefile
+│   │   │   ├── README.md
+│   │   │   └── estudio.md            # guía de estudio para escribir el test en C
+│   │   └── test_microphone_ino/      # versión con la API de Arduino (.ino)
 │   │       ├── record_max9814.ino
-│   │       ├── record_audio.py
 │   │       └── README.md
-│   └── mcp4725_pam8403/          # test DAC MCP4725 + amplificador PAM8403
-│       ├── test_audio_tones.c    # generador de ondas (menú serie interactivo)
-│       ├── test_audio_stream.c   # streaming de audio por UART
-│       ├── i2c_scanner.c         # escáner de dispositivos I2C
-│       ├── stream_audio.py       # CLI que envía audio al firmware de streaming
+│   └── speaker/                      # test DAC MCP4725 + amplificador PAM8403
+│       ├── test_audio_tones.c        # generador de ondas (menú serie interactivo)
+│       ├── test_audio_stream.c       # streaming de audio por UART
+│       ├── i2c_scanner.c             # escáner de dispositivos I2C
+│       ├── stream_audio.py           # CLI que envía audio al firmware de streaming
 │       ├── Makefile
 │       └── README.md
-└── audio-samples/                # muestras para probar el streaming (gitignored, solo .gitkeep)
+└── audio-samples/                    # muestras para probar el streaming (gitignored, solo .gitkeep)
 ```
 
 ---
@@ -172,7 +176,7 @@ make PORT=/dev/ttyUSB1 upload
 
 Varios tests comparten un mismo `Makefile` y se seleccionan con `TEST=`:
 ```bash
-make TEST=test_audio_stream upload     # en test-devices/mcp4725_pam8403/
+make TEST=test_audio_stream upload     # en test-devices/speaker/
 ```
 
 ### Auto-detección de Puerto USB
