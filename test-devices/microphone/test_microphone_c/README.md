@@ -56,6 +56,10 @@ make monitor                             # ver el ADC en vivo (solo test_max9814
 | No cambia al hablar | Hablar cerca; revisar soldaduras del módulo |
 | Suena a ruido/distorsión | **Clipping** por ganancia alta: reducir la ganancia con el pin `Gain` a VCC (40 dB). El firmware está bien si llegan ~8000 bytes/s |
 
+## Demo
+
+https://github.com/user-attachments/assets/4576e595-0b40-4988-9ae6-0a8ee15e9fd9
+
 ## Referencias
 
 - [Datasheet MAX9814](https://www.analog.com/media/en/technical-documentation/data-sheets/max9814.pdf)
