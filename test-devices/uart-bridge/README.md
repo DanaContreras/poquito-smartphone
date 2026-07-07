@@ -160,7 +160,8 @@ Si el LED del Arduino late parejo y el del ESP parpadea, el enlace UART a travé
 
 ## Baud
 
-- El test usa **9600 baud**, fiable con cualquier conversor de nivel.
+
+- El test usa **125000 baud**: a 16 MHz es un **divisor exacto** (16 MHz / 128 con el modo double-speed U2X del driver, `UBRR=15`), así que el AVR tiene **0% de error**. Es la mitad exacta de la tasa de audio (250000). El **TXS0108E** lo banca de sobra.
 - Para el audio real (Test C) se sube a **250000 baud** (divisor exacto en el AVR a 16 MHz, 0% de error; ~3× de margen sobre la tasa de audio de 8 kB/s). El **TXS0108E la banca de sobra**: su máximo es **110 Mbps en push-pull** (el UART es push-pull), unas 440× por encima de 250000 — el conversor no es el cuello de botella.
 - Para cambiar el baud: `BAUD` en el `Makefile` del Arduino y `LINK_BAUD` en `echo/echo.ino` (deben coincidir).
 

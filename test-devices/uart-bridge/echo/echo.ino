@@ -11,7 +11,7 @@
  * Portabilidad: el codigo es identico para ESP8266 y ESP32 (ambos usan UART0).
  */
 
-#define LINK_BAUD 9600
+#define LINK_BAUD 125000
 
 void setup() {
   Serial.begin(LINK_BAUD);            // UART0 de hardware = enlace con el Arduino

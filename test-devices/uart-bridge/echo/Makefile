@@ -25,7 +25,7 @@ _PROJECT_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../../..)
 # Puerto serial - auto-deteccion (override con: make PORT=/dev/ttyUSBx upload)
 PORT := $(shell $(_PROJECT_ROOT)/scripts/detect_port.sh)
 
-MON_BAUD ?= 9600
+MON_BAUD ?= 125000
 
 # Compilar el sketch
 compile:
