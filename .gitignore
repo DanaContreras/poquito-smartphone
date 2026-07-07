@@ -12,3 +12,6 @@ audio-samples/*
 .venv/
 __pycache__/
 *.pyc
+
+# Credenciales Wi-Fi de los tests (se versiona solo secrets.h.example)
+secrets.h
