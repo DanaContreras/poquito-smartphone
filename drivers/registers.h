@@ -42,6 +42,13 @@
 #define TWSTO   4
 #define TWEN    2
 
+/* GPIO - PORTB - 0x25 (PB5 = LED onboard en UNO/Nano, pin D13) */
+
+#define DDRB    REG8(0x24)
+#define PORTB   REG8(0x25)
+
+#define PORTB5  5
+
 /* GPIO - PORTC - 0x26 */
 
 #define PORTC   REG8(0x26)
